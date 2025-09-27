@@ -1,11 +1,11 @@
 import { Fragment, jsxDEV } from "react/jsx-dev-runtime";
-import React, { useState, useEffect, useRef, useSyncExternalStore } from "react";
+import React from "react";
 import * as ReactDOM from "react-dom/client";
 import SceneManager from "./SceneManager.jsx";
 const room = new WebsimSocket();
 const REGION_SIZE = 256;
 function usePresence() {
-  const presence = useSyncExternalStore(
+  const presence = React.useSyncExternalStore(
     (callback) => room.subscribePresence(callback),
     () => room.presence
   );
@@ -30,14 +30,14 @@ function useFilteredRecords(collectionName, filter = {}) {
   const collectionFilter = React.useMemo(() => {
     return room.collection(collectionName).filter(filter);
   }, [collectionName, filterObject]);
-  const list = useSyncExternalStore(
+  const list = React.useSyncExternalStore(
     (callback) => collectionFilter.subscribe(callback),
     () => collectionFilter.getList()
   );
   return list;
 }
 function GridWorld() {
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isInitialized, setIsInitialized] = React.useState(false);
   const peerPresence = usePresence();
   const currentClientId = room.clientId;
   const initialPos = {
@@ -49,7 +49,7 @@ function GridWorld() {
     region_x: 0,
     region_y: 0
   };
-  useEffect(() => {
+  React.useEffect(() => {
     async function setup() {
       await ensureInitialRegions();
       setIsInitialized(true);

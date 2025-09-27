@@ -1,29 +1,29 @@
 import { jsxDEV } from "react/jsx-dev-runtime";
-import React, { useRef, useEffect, useCallback } from "react";
+import React from "react";
 import * as THREE from "three";
 import { OrbitControls } from "OrbitControls";
 import Avatar from "./Avatar.jsx";
 import ObjectPrim from "./ObjectPrim.jsx";
 const SceneManager = React.memo(({ region, primitives, myPosition, otherPeers, onMovement, regionSize }) => {
-  const mountRef = useRef(null);
-  const sceneRef = useRef(null);
-  const cameraRef = useRef(null);
-  const rendererRef = useRef(null);
-  const controlsRef = useRef(null);
-  const lastUpdateTimeRef = useRef(performance.now());
-  const movementState = useRef({ forward: false, backward: false, left: false, right: false, up: false, down: false });
+  const mountRef = React.useRef(null);
+  const sceneRef = React.useRef(null);
+  const cameraRef = React.useRef(null);
+  const rendererRef = React.useRef(null);
+  const controlsRef = React.useRef(null);
+  const lastUpdateTimeRef = React.useRef(performance.now());
+  const movementState = React.useRef({ forward: false, backward: false, left: false, right: false, up: false, down: false });
   const MOVE_SPEED = 5;
   const MAX_FLY_SPEED = 15;
   const DRAG_FACTOR = 0.9;
   const GRAVITY = -15;
   const JUMP_VELOCITY = 7;
   const FLY_THRUST = 1;
-  const velocity = useRef(new THREE.Vector3(0, 0, 0));
-  const isFlying = useRef(false);
-  const isGrounded = useRef(true);
+  const velocity = React.useRef(new THREE.Vector3(0, 0, 0));
+  const isFlying = React.useRef(false);
+  const isGrounded = React.useRef(true);
   const tempVector = new THREE.Vector3();
-  const currentSimPosition = useRef(new THREE.Vector3(myPosition.x, myPosition.z, myPosition.y));
-  useEffect(() => {
+  const currentSimPosition = React.useRef(new THREE.Vector3(myPosition.x, myPosition.z, myPosition.y));
+  React.useEffect(() => {
     if (!mountRef.current) return;
     if (rendererRef.current) {
       mountRef.current.removeChild(rendererRef.current.domElement);
@@ -145,7 +145,7 @@ const SceneManager = React.memo(({ region, primitives, myPosition, otherPeers, o
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, [region, regionSize]);
-  const animate = useCallback(() => {
+  const animate = React.useCallback(() => {
     requestAnimationFrame(animate);
     const delta = (performance.now() - lastUpdateTimeRef.current) / 1e3;
     lastUpdateTimeRef.current = performance.now();
@@ -219,10 +219,10 @@ const SceneManager = React.memo(({ region, primitives, myPosition, otherPeers, o
     }
     rendererRef.current.render(sceneRef.current, cameraRef.current);
   }, [onMovement, myPosition]);
-  useEffect(() => {
+  React.useEffect(() => {
     animate();
   }, [animate]);
-  useEffect(() => {
+  React.useEffect(() => {
     const scene = sceneRef.current;
     if (!scene) return;
     const existingPrimMeshes = scene.children.filter((c) => c.userData.type === "prim");
@@ -242,7 +242,7 @@ const SceneManager = React.memo(({ region, primitives, myPosition, otherPeers, o
       ObjectPrim.updateMesh(primMesh, prim);
     });
   }, [primitives]);
-  useEffect(() => {
+  React.useEffect(() => {
     const scene = sceneRef.current;
     if (!scene) return;
     const existingAvatars = scene.children.filter((c) => c.userData.type === "avatar");
