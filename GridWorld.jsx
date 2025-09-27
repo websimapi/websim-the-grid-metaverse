@@ -13,17 +13,40 @@ function usePresence() {
 }
 async function ensureInitialRegions() {
   await room.initialize();
-  const initialRegions = room.collection("region_v1").filter({ x: 0, y: 0 }).getList();
-  if (initialRegions.length === 0) {
-    console.log("Creating initial region (0, 0)...");
-    await room.collection("region_v1").create({
-      x: 0,
-      y: 0,
-      name: "Welcome Sim",
-      ground_color: 4500036
+  return new Promise((resolve, reject) => {
+    const regionCollection = room.collection("region_v1").filter({ x: 0, y: 0 });
+    let resolved = false;
+    const unsubscribe = regionCollection.subscribe(async (regions) => {
+      if (resolved) return;
+      if (regions) {
+        if (regions.length === 0) {
+          console.log("Creating initial region (0, 0)...");
+          try {
+            await room.collection("region_v1").create({
+              x: 0,
+              y: 0,
+              name: "Welcome Sim",
+              ground_color: 4500036
+            });
+            console.log("Initial region created.");
+          } catch (e) {
+            console.error("Failed to create initial region", e);
+            if (!resolved) {
+              resolved = true;
+              unsubscribe();
+              reject(e);
+            }
+          }
+        } else {
+          if (!resolved) {
+            resolved = true;
+            unsubscribe();
+            resolve();
+          }
+        }
+      }
     });
-    console.log("Initial region created.");
-  }
+  });
 }
 function useFilteredRecords(collectionName, filter = {}) {
   const filterObject = JSON.stringify(filter);
@@ -113,7 +136,7 @@ function GridWorld() {
       ")..."
     ] }, void 0, true, {
       fileName: "<stdin>",
-      lineNumber: 164,
+      lineNumber: 189,
       columnNumber: 16
     }, this);
   }
@@ -128,7 +151,7 @@ function GridWorld() {
       ")",
       /* @__PURE__ */ jsxDEV("br", {}, void 0, false, {
         fileName: "<stdin>",
-        lineNumber: 170,
+        lineNumber: 195,
         columnNumber: 77
       }, this),
       "Local Position: X:",
@@ -139,19 +162,20 @@ function GridWorld() {
       myPresence.z?.toFixed(1) || 0,
       /* @__PURE__ */ jsxDEV("br", {}, void 0, false, {
         fileName: "<stdin>",
-        lineNumber: 171,
+        lineNumber: 196,
         columnNumber: 134
       }, this),
       "Peers Online: ",
       Object.keys(peerPresence).length
     ] }, void 0, true, {
       fileName: "<stdin>",
-      lineNumber: 169,
+      lineNumber: 194,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV(
       SceneManager,
       {
+        room,
         region: currentRegion,
         primitives,
         myPosition: myPresence,
@@ -163,19 +187,19 @@ function GridWorld() {
       false,
       {
         fileName: "<stdin>",
-        lineNumber: 175,
+        lineNumber: 200,
         columnNumber: 13
       },
       this
     ),
     /* @__PURE__ */ jsxDEV(UGCPanel, { region_x, region_y }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 184,
+      lineNumber: 210,
       columnNumber: 13
     }, this)
   ] }, void 0, true, {
     fileName: "<stdin>",
-    lineNumber: 168,
+    lineNumber: 193,
     columnNumber: 9
   }, this);
 }
@@ -206,7 +230,7 @@ function UGCPanel({ region_x, region_y }) {
   return /* @__PURE__ */ jsxDEV("div", { className: "ugc-panel", children: [
     /* @__PURE__ */ jsxDEV("h2", { children: "Building Tools" }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 216,
+      lineNumber: 242,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("p", { children: [
@@ -217,22 +241,22 @@ function UGCPanel({ region_x, region_y }) {
       ")"
     ] }, void 0, true, {
       fileName: "<stdin>",
-      lineNumber: 217,
+      lineNumber: 243,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("button", { onClick: () => handleCreatePrim("box"), children: "Create Box" }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 218,
+      lineNumber: 244,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("button", { onClick: () => handleCreatePrim("sphere"), children: "Create Sphere" }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 219,
+      lineNumber: 245,
       columnNumber: 13
     }, this)
   ] }, void 0, true, {
     fileName: "<stdin>",
-    lineNumber: 215,
+    lineNumber: 241,
     columnNumber: 9
   }, this);
 }
@@ -240,6 +264,6 @@ const container = document.getElementById("root");
 const root = ReactDOM.createRoot(container);
 root.render(/* @__PURE__ */ jsxDEV(GridWorld, {}, void 0, false, {
   fileName: "<stdin>",
-  lineNumber: 226,
+  lineNumber: 252,
   columnNumber: 13
 }));

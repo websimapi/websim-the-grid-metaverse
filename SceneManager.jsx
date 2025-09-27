@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { OrbitControls } from "OrbitControls";
 import Avatar from "./Avatar.jsx";
 import ObjectPrim from "./ObjectPrim.jsx";
-const SceneManager = React.memo(({ region, primitives, myPosition, otherPeers, onMovement, regionSize }) => {
+const SceneManager = React.memo(({ room, region, primitives, myPosition, otherPeers, onMovement, regionSize }) => {
   const mountRef = React.useRef(null);
   const sceneRef = React.useRef(null);
   const cameraRef = React.useRef(null);
@@ -255,7 +255,7 @@ const SceneManager = React.memo(({ region, primitives, myPosition, otherPeers, o
     });
     otherPeers.forEach((peer) => {
       let avatarMesh = avatarIdMap.get(peer.id);
-      const peerInfo = room.peers[peer.id];
+      const peerInfo = room && room.peers ? room.peers[peer.id] : {};
       if (peer.region_x !== myPosition.region_x || peer.region_y !== myPosition.region_y) {
         if (avatarMesh) scene.remove(avatarMesh);
         return;
