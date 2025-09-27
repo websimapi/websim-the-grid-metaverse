@@ -1,2 +1,75 @@
-... no changes
+.login-screen h1 {
+    font-size: 3em;
+    color: #eee;
+    text-shadow: 2px 2px 4px #000;
+}
 
+.login-screen .connect-box, .login-screen .server-info {
+    background: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+.login-screen input {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background: #222;
+    color: #eee;
+    font-size: 1em;
+}
+
+.login-screen button {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.2em;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-screen button:hover {
+    background-color: #0056b3;
+}
+
+.login-screen button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+.login-screen .error-message {
+    color: #ff4444;
+    margin-top: 10px;
+}
+
+.login-screen .server-info {
+    text-align: left;
+    font-size: 0.9em;
+}
+
+.login-screen .server-info h3 {
+    margin-top: 0;
+    color: #00aaff;
+}
+
+.login-screen .server-info p {
+    line-height: 1.5;
+}
+
+.login-screen .server-info pre {
+    background: #111;
+    padding: 10px;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: monospace;
+}

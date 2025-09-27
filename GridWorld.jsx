@@ -2,66 +2,27 @@ import { Fragment, jsxDEV } from "react/jsx-dev-runtime";
 import React from "react";
 import * as ReactDOM from "react-dom/client";
 import SceneManager from "./SceneManager.jsx";
-const room = new WebsimSocket();
 const REGION_SIZE = 256;
-function usePresence() {
+function usePresence(room) {
   const presence = React.useSyncExternalStore(
     (callback) => room.subscribePresence(callback),
     () => room.presence
   );
   return presence;
 }
-async function ensureInitialRegions() {
-  await room.initialize();
-  return new Promise((resolve, reject) => {
-    const regionCollection = room.collection("region_v1").filter({ x: 0, y: 0 });
-    let resolved = false;
-    const unsubscribe = regionCollection.subscribe(async (regions) => {
-      if (resolved) return;
-      if (regions) {
-        if (regions.length === 0) {
-          console.log("Creating initial region (0, 0)...");
-          try {
-            await room.collection("region_v1").create({
-              x: 0,
-              y: 0,
-              name: "Welcome Sim",
-              ground_color: 4500036
-            });
-            console.log("Initial region created.");
-          } catch (e) {
-            console.error("Failed to create initial region", e);
-            if (!resolved) {
-              resolved = true;
-              unsubscribe();
-              reject(e);
-            }
-          }
-        } else {
-          if (!resolved) {
-            resolved = true;
-            unsubscribe();
-            resolve();
-          }
-        }
-      }
-    });
-  });
-}
-function useFilteredRecords(collectionName, filter = {}) {
+function useFilteredRecords(room, collectionName, filter = {}) {
   const filterObject = JSON.stringify(filter);
   const collectionFilter = React.useMemo(() => {
     return room.collection(collectionName).filter(filter);
-  }, [collectionName, filterObject]);
+  }, [room, collectionName, filterObject]);
   const list = React.useSyncExternalStore(
     (callback) => collectionFilter.subscribe(callback),
     () => collectionFilter.getList()
   );
   return list;
 }
-function GridWorld() {
-  const [isInitialized, setIsInitialized] = React.useState(false);
-  const peerPresence = usePresence();
+function GridWorld({ room }) {
+  const peerPresence = usePresence(room);
   const currentClientId = room.clientId;
   const initialPos = {
     x: REGION_SIZE / 2,
@@ -73,25 +34,20 @@ function GridWorld() {
     region_y: 0
   };
   React.useEffect(() => {
-    async function setup() {
-      await ensureInitialRegions();
-      setIsInitialized(true);
-      const initialPresence = room.presence[currentClientId];
-      if (!initialPresence || initialPresence.x === void 0) {
-        room.updatePresence(initialPos);
-      }
+    const initialPresence = room.presence[currentClientId];
+    if (!initialPresence || initialPresence.x === void 0) {
+      room.updatePresence(initialPos);
     }
-    setup();
     room.subscribePresenceUpdateRequests((updateRequest, fromClientId) => {
       console.log(`Received presence update request from ${fromClientId}:`, updateRequest);
     });
-  }, [currentClientId]);
+  }, [currentClientId, room]);
   const myPresence = peerPresence[currentClientId] || initialPos;
   const region_x = myPresence.region_x ?? initialPos.region_x;
   const region_y = myPresence.region_y ?? initialPos.region_y;
-  const regions = useFilteredRecords("region_v1", { x: region_x, y: region_y });
+  const regions = useFilteredRecords(room, "region_v1", { x: region_x, y: region_y });
   const currentRegion = regions[0];
-  const primitives = useFilteredRecords("prim_v1", { region_x, region_y });
+  const primitives = useFilteredRecords(room, "prim_v1", { region_x, region_y });
   const handleMovement = (newPos) => {
     let { x, y, z } = newPos;
     let rx = region_x;
@@ -127,7 +83,7 @@ function GridWorld() {
     });
   };
   const otherPeers = Object.entries(peerPresence).filter(([id]) => id !== currentClientId && id in room.peers).map(([id, data]) => ({ id, ...data }));
-  if (!isInitialized || !currentRegion) {
+  if (!currentRegion) {
     return /* @__PURE__ */ jsxDEV("div", { className: "hud", children: [
       "Connecting to the Grid... Waiting for Region Data (",
       region_x,
@@ -136,7 +92,7 @@ function GridWorld() {
       ")..."
     ] }, void 0, true, {
       fileName: "<stdin>",
-      lineNumber: 189,
+      lineNumber: 135,
       columnNumber: 16
     }, this);
   }
@@ -151,7 +107,7 @@ function GridWorld() {
       ")",
       /* @__PURE__ */ jsxDEV("br", {}, void 0, false, {
         fileName: "<stdin>",
-        lineNumber: 195,
+        lineNumber: 141,
         columnNumber: 77
       }, this),
       "Local Position: X:",
@@ -162,14 +118,14 @@ function GridWorld() {
       myPresence.z?.toFixed(1) || 0,
       /* @__PURE__ */ jsxDEV("br", {}, void 0, false, {
         fileName: "<stdin>",
-        lineNumber: 196,
+        lineNumber: 142,
         columnNumber: 134
       }, this),
       "Peers Online: ",
       Object.keys(peerPresence).length
     ] }, void 0, true, {
       fileName: "<stdin>",
-      lineNumber: 194,
+      lineNumber: 140,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV(
@@ -187,23 +143,23 @@ function GridWorld() {
       false,
       {
         fileName: "<stdin>",
-        lineNumber: 200,
+        lineNumber: 146,
         columnNumber: 13
       },
       this
     ),
-    /* @__PURE__ */ jsxDEV(UGCPanel, { region_x, region_y }, void 0, false, {
+    /* @__PURE__ */ jsxDEV(UGCPanel, { room, region_x, region_y }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 210,
+      lineNumber: 156,
       columnNumber: 13
     }, this)
   ] }, void 0, true, {
     fileName: "<stdin>",
-    lineNumber: 193,
+    lineNumber: 139,
     columnNumber: 9
   }, this);
 }
-function UGCPanel({ region_x, region_y }) {
+function UGCPanel({ room, region_x, region_y }) {
   const handleCreatePrim = async (shape) => {
     const username = room.peers[room.clientId]?.username || "Unknown Builder";
     try {
@@ -230,7 +186,7 @@ function UGCPanel({ region_x, region_y }) {
   return /* @__PURE__ */ jsxDEV("div", { className: "ugc-panel", children: [
     /* @__PURE__ */ jsxDEV("h2", { children: "Building Tools" }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 242,
+      lineNumber: 188,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("p", { children: [
@@ -241,29 +197,26 @@ function UGCPanel({ region_x, region_y }) {
       ")"
     ] }, void 0, true, {
       fileName: "<stdin>",
-      lineNumber: 243,
+      lineNumber: 189,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("button", { onClick: () => handleCreatePrim("box"), children: "Create Box" }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 244,
+      lineNumber: 190,
       columnNumber: 13
     }, this),
     /* @__PURE__ */ jsxDEV("button", { onClick: () => handleCreatePrim("sphere"), children: "Create Sphere" }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 245,
+      lineNumber: 191,
       columnNumber: 13
     }, this)
   ] }, void 0, true, {
     fileName: "<stdin>",
-    lineNumber: 241,
+    lineNumber: 187,
     columnNumber: 9
   }, this);
 }
-const container = document.getElementById("root");
-const root = ReactDOM.createRoot(container);
-root.render(/* @__PURE__ */ jsxDEV(GridWorld, {}, void 0, false, {
-  fileName: "<stdin>",
-  lineNumber: 252,
-  columnNumber: 13
-}));
+var stdin_default = GridWorld;
+export {
+  stdin_default as default
+};
